@@ -266,3 +266,148 @@ items: {{ items }}
 {% endwith %}
 ```
 
+## 2 上下文环境
+
+Flask每个请求都有生命周期，在生命周期内请求有其上下文环境Request Context。作为在请求中渲染的模板，自然也在请求的生命周期内，所以Flask应用中的模板可以使用到请求上下文中的环境变量，及一些辅助函数。本文就会介绍下这些变量和函数。
+
+### 标准上下文变量和函数
+
+#### 请求对象request
+
+request对象可以用来获取请求的方法`request.method`，表单`request.form`，请求的参数`request.args`，请求地址`request.url`等。它本身是一个字典。在模板中，你一样可以获取这些内容，只要用表达式符号`{{ }}`括起来即可。
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上下文环境</title>
+</head>
+<body>
+<h3>上下文环境</h3>
+<p>当前请求的url: {{ request.url }}</p>
+</body>
+</html>
+```
+
+在没有请求上下文的环境中，这个对象不可用。
+
+#### 会话对象session
+
+session对象可以用来获取当前会话中保存的状态，它本身是一个字典。在模板中，你可以用表达式符号`{{ }}`来获取这个对象。
+
+Flask代码如下，别忘了设置会话密钥哦：
+
+```python
+app = Flask(__name__)
+app.secret_key = '123456'
+
+
+@app.route('/')
+def index():
+    session['user'] = "游客"
+    return render_template('02上下文环境.html')
+```
+
+模板代码：
+
+```html
+<h3>会话对象session</h3>
+<p>用户: {{ session.user }}</p>
+```
+
+在没有请求上下文的环境中，这个对象不可用。
+
+#### 全局对象g
+
+全局变量g，用来保存请求中会用到全局内容，比如数据库连接。模板中也可以访问。
+
+Flask代码：
+
+```python
+@app.route('/')
+def index():
+    session['user'] = "游客"
+    g.db = "mysql"
+    return render_template('02上下文环境.html')
+```
+
+模板代码：
+
+```html
+<h3>全局对象g</h3>
+<p>数据库: {{ g.db }}</p>
+```
+
+`g`对象是保存在[应用上下文环境](http://www.bjhee.com/flask-ad1.html)中的，也只在一个请求生命周期内有效。在没有应用上下文的环境中，这个对象不可用。
+
+#### Flask配置对象config
+
+这个配置对象在模板中也可以访问。
+
+```html
+<h3>config对象</h3>
+<p>配置对象: {{ config.DEBUG }}</p>
+```
+
+`config`是全局对象，离开了请求生命周期也可以访问。
+
+#### 消息闪现
+
+`get_flashed_messages()` 函数是用来获取消息闪现的。这也是一个全局可使用的函数。这个就不演示了
+
+### 自定义上下文变量和函数
+
+#### 自定义变量
+
+除了Flask提供的标准上下文变量和函数，我们还可以自己定义。下面我们就来先定义一个上下文变量，在Flask应用代码中，加入下面的函数：
+
+```python
+@app.context_processor
+def appinfo():
+    data = {
+        'cate1':'爬虫',
+        'cate2':'数据分析',
+        'cate3':'人工智能'
+    }
+    return dict(data=data)
+```
+
+函数返回的是一个字典，里面有一个属性`data` 
+
+函数用`@app.context_processor`装饰器修饰，它是一个上下文处理器，它的作用是在模板被渲染前运行其所修饰的函数，并将函数返回的字典导入到模板上下文环境中，与模板上下文合并。然后，在模板中`data`就如同上节介绍的`request`, `session`一样，成为了可访问的上下文对象。我们可以在模板中将其输出：
+
+```html
+<hr>
+
+<h2>自定义上下文变量和函数</h2>
+<h3>自定义变量</h3>
+{% for item in data %}
+    <li>{{ data[item] }}</li>
+{% endfor %}
+```
+
+#### 自定义函数
+
+同理可以自定义上下文函数，只需将上例中返回字典的属性指向一个函数即可，下面我们就来定义一个上下文函数来获取系统当前时间：
+
+```python
+import time
+
+@app.context_processor
+def get_current_time():
+    def get_time(timeFormat="%Y-%m-%d - %H:%M:%S"):
+        return time.strftime(timeFormat)
+
+    return dict(current_time=get_time)
+```
+
+我们可以试下在模板中将其输出：
+
+```html
+<h3>自定义函数</h3>
+<p>当前时间: {{ current_time() }}</p>
+<p>当前日期: {{ current_time("%Y-%m-%d") }}</p>
+```
+
+上下文处理器可以修饰多个函数，也就是我们可以定义多个上下文环境变量和函数。

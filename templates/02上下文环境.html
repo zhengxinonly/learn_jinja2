@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上下文环境</title>
+</head>
+<body>
+<h2>标准上下文变量和函数</h2>
+<h3>请求对象request</h3>
+<p>当前请求的url: {{ request.url }}</p>
+
+<h3>会话对象session</h3>
+<p>用户: {{ session.user }}</p>
+
+<h3>全局对象g</h3>
+<p>数据库: {{ g.db }}</p>
+
+<h3>config对象</h3>
+<p>配置对象: {{ config.DEBUG }}</p>
+
+<hr>
+
+<h2>自定义上下文变量和函数</h2>
+<h3>自定义变量</h3>
+{% for item in data %}
+    <li>{{ data[item] }}</li>
+{% endfor %}
+
+<h3>自定义函数</h3>
+<p>当前时间: {{ current_time() }}</p>
+<p>当前日期: {{ current_time("%Y-%m-%d") }}</p>
+</body>
+</html>
