@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>过滤器</title>
+</head>
+<body>
+<h2>过滤器使用</h2>
+大写过滤器:{{ hello | upper }}
+<br>
+多个过滤条件: {{ hello | upper | truncate(6, True) }}!
+
+<hr>
+
+<h2>内置过滤器</h2>
+<h3>字符串过滤器</h3>
+<p>当变量未定义时，显示默认字符串，可以缩写为d: {{ hello | default('No hello', true) }}</p>
+
+<p>单词首字母大写: {{ hello | capitalize }}</p>
+
+<p>单词全小写: {{ 'Hello world !' | lower }}</p>
+
+<p>去除字符串前后的空白字符: {{ '  hello  ' | trim }}</p>
+
+<p>字符串反转: {{ hello | reverse }}</p>
+
+<p>格式化输出: {{ '%s is %d' | format("Number", 2) }}</p>
+
+<p>关闭HTML自动转义: {{ '<em>name</em>' | safe }}</p>
+
+{% autoescape false %}
+<p>HTML转义,autoescape关了也转义，可以缩写为e: {{ '<em>name</em>' | escape }}</p>
+{% endautoescape %}
+
+<hr>
+<h3>数值操作</h3>
+<p>12.8888 四舍五入取整: {{ 12.8888 | round }}</p>
+
+<p>向下截取到小数点后2位: {{ 12.8888 | round(2, 'floor') }}</p>
+
+<p>-12 绝对值: {{ -12 | abs }}</p>
+
+<hr>
+<h3>列表操作</h3>
+{% set arr = [1,2,3,4,5]  %}
+{{ arr }}
+<p>取第一个元素: {{ arr | first }}</p>
+
+<p>取最后一个元素: {{ arr | last }}</p>
+
+<p>返回列表长度: {{ arr | length }}</p>
+
+<p>列表求和: {{ arr | sum }}</p>
+
+<p>列表排序，默认为升序: {{ arr | sort }}</p>
+
+<p>合并为字符串: {{ arr | join(' | ') }}</p>
+
+{# 这里可以用upper,lower，但capitalize无效 #}
+<p>列表中所有元素都全大写: {{ ['tom','bob','ada'] | upper }}</p>
+
+<hr>
+
+<h3>字典列表操作</h3>
+
+{% set users=[{'name':'Tom','gender':'M','age':20},
+              {'name':'John','gender':'M','age':18},
+              {'name':'Mary','gender':'F','age':24},
+              {'name':'Bob','gender':'M','age':31},
+              {'name':'Lisa','gender':'F','age':19}]
+%}
+
+<h4>字典排序</h4>
+{# 按指定字段排序，这里设reverse为true使其按降序排 #}
+<ul>
+{% for user in users | sort(attribute='age', reverse=true) %}
+     <li>用户名: {{ user.name }}, 用户年龄: {{ user.age }}</li>
+{% endfor %}
+</ul>
+
+<h4>列表分组</h4>
+{# 列表分组，每组是一个子列表，组名就是分组项的值 #}
+<ul>
+{% for group in users|groupby('gender') %}
+    <li>所属分组: {{ group.grouper }}<ul>
+    {% for user in group.list %}
+        <li>用户名: {{ user.name }}</li>
+    {% endfor %}</ul></li>
+{% endfor %}
+</ul>
+
+<h4>获取字典某个字段</h4>
+{# 取字典中的某一项组成列表，再将其连接起来 #}
+<p>{{ users | map(attribute='name') | join(', ') }}</p>
+
+<hr>
+<h2>Flask内置过滤器</h2>
+<script type="text/javascript">
+    var users = {{ users | tojson | safe }};
+    console.log(users);
+</script>
+
+<h2>自定义过滤器</h2>
+<p>偶数过滤器: {{ [1,2,3,4,5] | double_step }}</p>
+</body>
+</html>

@@ -411,3 +411,207 @@ def get_current_time():
 ```
 
 上下文处理器可以修饰多个函数，也就是我们可以定义多个上下文环境变量和函数。
+
+## 3 过滤器
+
+大部分模板引擎都会提供类似Jinja2过滤器的功能，只不过叫法不同罢了。比如PHP Smarty中的Modifiers（变量调节器或修饰器），FreeMarker中的Build-ins（内建函数），连AngularJS这样的前端框架也提供了Filter过滤器。它们都是用来在变量被显示或使用前，对其作转换处理的。可以把它认为是一种转换函数，输入的参数就是其所修饰的变量，返回的就是变量转换后的值。
+
+```python
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    hello = "hello world !"
+    return render_template('03过滤器.html', hello=hello)
+
+```
+
+### 过滤器使用
+
+```html
+<h2>过滤器使用</h2>
+大写过滤器:{{ hello | upper }}
+```
+
+你会看到 hello 的输出都变成大写了。这就是过滤器，只需在待过滤的变量后面加上”|“符号，再加上过滤器名称，就可以对该变量作过滤转换。上面例子就是转换成全大写字母。过滤器可以连续使用
+
+```html
+<br>
+多个过滤条件: {{ hello | upper | truncate(6, True) }}!
+```
+
+现在hello变量不但被转换为大写，而且当它的长度大于3后，只显示前3个字符，后面默认用”…“显示。过滤器`truncate`有3个参数，第一个是字符截取长度；第二个决定是否保留截取后的子串，默认是`False`，也就是当字符大于3后，只显示”…“，截取部分也不出现；第三个是省略符号，默认是”…“。
+
+其实从例子中我们可以猜到，过滤器本质上就是一个转换函数，它的第一个参数就是待过滤的变量，在模板中使用时可以省略去。如果它有第二个参数，模板中就必须传进去。
+
+### 内置过滤器
+
+> Builtin Filters
+
+Jinja2模板引擎提供了丰富的内置过滤器。这里介绍几个常用的。
+
+#### 字符串操作
+
+```jinja2
+<h2>内置过滤器</h2>
+<h3>字符串过滤器</h3>
+<p>当变量未定义时，显示默认字符串，可以缩写为d: {{ hello | default('No hello', true) }}</p>
+
+<p>单词首字母大写: {{ 'hello' | capitalize }}</p>
+
+<p>单词全小写: {{ 'XML' | lower }}</p>
+
+<p>去除字符串前后的空白字符: {{ '  hello  ' | trim }}</p>
+
+<p>字符串反转: {{ 'hello' | reverse }}</p>
+
+<p>格式化输出: {{ '%s is %d' | format("Number", 2) }}</p>
+
+<p>关闭HTML自动转义: {{ '<em>name</em>' | safe }}</p>
+
+{% autoescape false %}
+<p>HTML转义,autoescape关了也转义，可以缩写为e: {{ '<em>name</em>' | escape }}</p>
+{% endautoescape %}
+```
+
+#### 数值操作
+
+```jinja2
+<hr>
+<h3>数值操作</h3>
+<p>12.8888 四舍五入取整: {{ 12.8888 | round }}</p>
+
+<p>向下截取到小数点后2位: {{ 12.8888 | round(2, 'floor') }}</p>
+
+<p>-12 绝对值: {{ -12 | abs }}</p>
+```
+
+#### 列表操作
+
+```jinja2
+<h3>列表操作</h3>
+{% set arr = [1,2,3,4,5]  %}
+{{ arr }}
+<p>取第一个元素: {{ arr | first }}</p>
+
+<p>取最后一个元素: {{ arr | last }}</p>
+
+<p>返回列表长度: {{ arr | length }}</p>
+
+<p>列表求和: {{ arr | sum }}</p>
+
+<p>列表排序，默认为升序: {{ arr | sort }}</p>
+
+<p>合并为字符串: {{ arr | join(' | ') }}</p>
+
+{# 这里可以用upper,lower，但capitalize无效 #}
+<p>列表中所有元素都全大写: {{ ['tom','bob','ada'] | upper }}</p>
+```
+
+#### 字典列表操作
+
+```python
+<hr>
+
+<h3>字典列表操作</h3>
+
+{% set users=[{'name':'Tom','gender':'M','age':20},
+              {'name':'John','gender':'M','age':18},
+              {'name':'Mary','gender':'F','age':24},
+              {'name':'Bob','gender':'M','age':31},
+              {'name':'Lisa','gender':'F','age':19}]
+%}
+
+<h4>字典排序</h4>
+{# 按指定字段排序，这里设reverse为true使其按降序排 #}
+<ul>
+{% for user in users | sort(attribute='age', reverse=true) %}
+     <li>用户名: {{ user.name }}, 用户年龄: {{ user.age }}</li>
+{% endfor %}
+</ul>
+
+<h4>列表分组</h4>
+{# 列表分组，每组是一个子列表，组名就是分组项的值 #}
+<ul>
+{% for group in users|groupby('gender') %}
+    <li>所属分组: {{ group.grouper }}<ul>
+    {% for user in group.list %}
+        <li>用户名: {{ user.name }}</li>
+    {% endfor %}</ul></li>
+{% endfor %}
+</ul>
+
+<h4>获取字典某个字段</h4>
+{# 取字典中的某一项组成列表，再将其连接起来 #}
+<p>{{ users | map(attribute='name') | join(', ') }}</p>
+```
+
+更全的内置过滤器介绍可以从[Jinja2的官方文档](http://jinja.pocoo.org/docs/dev/templates/#builtin-filters)中找到。
+
+### Flask内置过滤器
+
+Flask提供了一个内置过滤器`tojson`，它的作用是将变量输出为JSON字符串。这个在配合Javascript使用时非常有用。我们延用上节字典列表操作中定义的”users”变量
+
+```html
+<script type="text/javascript">
+    var users = {{ users | tojson | safe }};
+    console.log(users[0].name);
+</script>
+```
+
+注意，这里要避免HTML自动转义，所以加上safe过滤器。
+
+### 语句块过滤
+
+Jinja2 还可以对整块的语句使用过滤器。
+
+```html
+{% filter upper %}
+    This is a Flask Jinja2 introduction.
+{% endfilter %}
+```
+
+不过上述这种场景不经常用到。
+
+### 自定义过滤器
+
+内置的过滤器不满足需求怎么办？自己写呗。过滤器说白了就是一个函数嘛，我们马上就来写一个。回到Flask应用代码中：
+
+```python
+def double_filter(l):
+    r = filter(lambda x: x % 2 == 0, l)
+    return list(r)
+```
+
+我们定义了一个`double_filter`函数，返回输入列表的偶数位元素（第0位，第2位,..）。怎么把它加到模板中当过滤器用呢？Flask应用对象提供了`add_template_filter`方法来帮我们实现。我们加入下面的代码：
+
+```python
+app.add_template_filter(double_filter, 'double_step')
+```
+
+函数的第一个参数是过滤器函数，第二个参数是过滤器名称。然后，我们就可以愉快地在模板中使用这个叫`double_step`的过滤器了：
+
+```python
+<h2>自定义过滤器</h2>
+<p>偶数过滤器: {{ [1,2,3,4,5] | double_step }}</p>
+```
+
+Flask还提供了添加过滤器的装饰器`template_filter`，使用起来更简单。
+
+```python
+@app.template_filter('double_step')
+def double_filter(l):
+    r = filter(lambda x: x % 2 == 0, l)
+    return list(r)
+```
+
+Flask添加过滤器的方法实际上是封装了对Jinja2环境变量的操作。上述添加`double_step`过滤器的方法，等同于下面的代码。
+
+```python
+app.jinja_env.filters['double_step'] = double_filter
+```
+
+我们在Flask应用中，不建议直接访问Jinja2的环境变量。如果离开Flask环境直接使用Jinja2的话，就可以通过`jinja2.Environment`来获取环境变量，并添加过滤器。
