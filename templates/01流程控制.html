@@ -1,0 +1,105 @@
+<!--filename:01流程控制.html-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello Sample</title>
+</head>
+<body>
+
+<hr>
+
+<h2>变量</h2>
+{% if name %}
+    <h3>Hello {{ name }}!</h3>
+{% else %}
+    <h1>Hello World!</h1>
+{% endif %}
+
+<hr>
+
+<h2>表达式</h2>
+<p>字符串: {{ "Hello" }}</p>
+<p>字典: {{ {'id':'1', 'name':'hello'} }}</p>
+<p>加法运算: {{ 1 + 2 }}</p>
+<p>乘法运算: {{ 2 > 1 }}</p>
+<p>逻辑运算: {{ False and True }}</p>
+<p>成员运算: {{ 1 in [1,2,3] }}</p>
+
+<hr>
+
+<h2>流程控制</h2>
+<h3>if判断</h3>
+{% if name and name == 'admin' %}
+    这是管理控制台
+{% elif name %}
+    欢迎回来 {{ name }}
+{% else %}
+    请登录
+{% endif %}
+
+<h3>for循环</h3>
+{% for digit in digits %}
+    <li>{{ digit }}</li>
+{% endfor %}
+<dl>
+    {% for user in users if not user.hidden %}
+        {% if loop.first %}
+            <div>用户列表:</div>
+        {% endif %}
+        <div class="{{ loop.cycle('odd', 'even') }}">
+            <dd>用户 {{ loop.index }} : {{ user.name }}</dd>
+        </div>
+        {% if loop.last %}
+            <dd>总用户数: {{ loop.length }}</dd>
+        {% endif %}
+    {% else %}
+        <li>没有找到用户</li>
+    {% endfor %}
+</dl>
+
+<style type="text/css">
+    .odd {
+        background-color: #BDF;
+    }
+</style>
+<hr>
+<h2>其他常用语法</h2>
+<h3>忽略模板语法</h3>
+{% raw %}
+<ul>
+    {% for item in items %}
+    <li>{{ item }}</li>
+    {% endfor %}
+</ul>
+{% endraw %}
+
+<h3>自动转义</h3>
+{% autoescape false %}
+Hello {{ name }}!
+{% endautoescape %}
+
+<h3>赋值</h3>
+{% set items = [1,2,3] %}
+items: {{ items }}
+
+<h3>with语句</h3>
+{% with foo = 1 %}
+    {% set bar = 2 %}
+    {{ foo + bar }}
+{% endwith %}
+{#在with外面调用直接报错#}
+{#{{ foo + bar }}#}
+
+<h3>执行表达式</h3>
+{% with arr = ['Sunny'] %}
+    {{ arr.append('Rainy') }}
+    {{ arr }}
+{% endwith %}
+<br>
+{% with arr = ['Sunny'] %}
+  {% do arr.append('Rainy') %}
+  {{ arr }}
+{% endwith %}
+</body>
+</html>
