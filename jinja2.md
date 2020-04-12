@@ -734,3 +734,130 @@ app.jinja_env.tests['end_with'] = end_with
 
 我们在Flask应用中，不建议直接访问 `Jinja2` 的环境变量。如果离开Flask环境直接使用`Jinja2` 的话，就可以通过`jinja2.Environment`来获取环境变量，并添加测试器。
 
+## 5 全局函数
+
+介绍完了过滤器和测试器，接下来要讲的是Jinja2模板引擎的另一个辅助函数功能，即全局函数Global Functions。如果说过滤器是一个变量转换函数，测试器是一个返回布尔值的函数，那全局函数就可以是任意函数。可以在任一场景使用，没有输入和输出值的限制。本篇我们就来阐述下这个全局函数。
+
+### 全局函数使用
+
+继续之前的开篇的代码，我们在模板中加入下面的代码：
+
+```python
+<h2>全局函数使用</h2>
+<h3>range</h3>
+<ul>
+    {% for num in range(10, 20, 2) %}
+        <li>for遍历: {{ num }}</li>
+    {% endfor %}
+</ul>
+```
+
+页面上会显示”10,12,14,16,18”5个列表项。全局函数`range()`的作用同Python里的一样，返回指定范围内的数值序列。三个参数分别是开始值，结束值（不包含），间隔。如果只传两个参数，那间隔默认为1；如果只传1个参数，那开始值默认为0。
+
+由此可见，全局函数如同其名字一样，就是全局范围内可以被使用的函数。其同[第二篇](http://www.bjhee.com/jinja2-context.html)介绍的上下文环境中定义的函数不同，没有请求生命周期的限制。
+
+### 内置全局函数
+
+演示几个常用的内置全局函数。
+
+- `dict()`函数，方便生成字典型变量
+
+```jinja2
+<h3>dict</h3>
+{% set user = dict(name='Mike',age=15) %}
+<p>{{ user | tojson | safe }}</p>
+```
+
+- `joiner()`函数，神奇的辅助函数。它可以初始化为一个分隔符，然后第一次调用时返回空字符串，以后再调用则返回分隔符。对分隔循环中的内容很有帮助
+
+```jinja2
+<h3>joiner</h3>
+{% set sep = joiner("|") %}
+{% for val in range(5) %}
+    {{ sep() }} <span>{{ val }}</span>
+{% endfor %}
+```
+
+- `cycler()`函数，作用同[第一篇](http://www.bjhee.com/jinja2-statement.html)介绍的循环内置变量`loop.cycle`类似，在给定的序列中轮循
+
+```jinja2
+<h3>cycle</h3>
+{% set cycle = cycler('odd', 'even') %}
+<ul>
+{% for num in range(10, 20, 2) %}
+    <li class="{{ cycle.next() }}">编号: {{ num }},
+    当前的累名 {{ cycle.current }} </li>
+{% endfor %}
+</ul>
+```
+
+基于上一节的例子，加上`cycler()`函数的使用，你会发现列表项``的`class`在”odd”和”even”两个值间轮循。加入[第一篇](http://www.bjhee.com/jinja2-statement.html)中的CSS style，就可以看到斑马线了。
+
+`cycler()`函数返回的对象可以做如下操作
+
+1. `next()`，返回当前值，并往下一个值轮循
+2. `reset()`，重置为第一个值
+3. `current`，当前轮循到的值
+
+更全的内置全局函数介绍可以从[Jinja2的官方文档](http://jinja.pocoo.org/docs/dev/templates/#list-of-global-functions)中找到。
+
+### 自定义全局函数
+
+我们当然也可以写自己的全局函数，方法同之前介绍的过滤器啦，测试器啦都很类似。就是将Flask应用代码中定义的函数，通过`add_template_global`将其传入模板即可：
+
+```python
+import re
+
+
+def accept_pattern(pattern_str):
+    pattern = re.compile(pattern_str, re.S)
+
+    def search(content):
+        return pattern.findall(content)
+
+    return dict(search=search, current_pattern=pattern_str)
+
+
+app.add_template_global(accept_pattern, 'accept_pattern')
+```
+
+上例中的`accept_pattern`函数会先预编译一个正则，然后返回的字典中包含一个查询函数`search`，之后调用`search`函数就可以用编译好的正则来搜索内容了。`app.add_template_global`方法的第一个参数是自定义的全局函数，第二个是全局函数名称。现在，让我们在模板中使用`accept_pattern`全局函数：
+
+```jinja2
+<h2>自定义全局函数</h2>
+{% with pattern = accept_pattern("<li>(.*?)</li>") %}
+  {% set founds = pattern.search("<li>Tom</li><li>Bob</li>") %}
+  <ul>
+  {% for item in founds %}
+    <li>找到一个内容: {{ item }}</li>
+  {% endfor %}
+  </ul>
+  <p>正则规则: {{ pattern.current_pattern }}</p>
+{% endwith %}
+```
+
+“Tom”和”Bob”被抽取出来了，很牛掰的样子。你还可以根据需要在`accept_pattern`的返回字典里定义更多的方法。
+
+Flask同样提供了添加全局函数的装饰器`template_global`，以方便全局函数的添加。我们来用它将第二篇中取系统当前时间的函数`current_time`定义为全局函数。
+
+```python
+@app.template_global('current_time')
+def current_time(timeFormat="%Y-%m-%d - %H:%M:%S"):
+    return time.strftime(timeFormat)
+```
+
+同[第二篇](http://www.bjhee.com/jinja2-context.html)中的一样，我们在模板中可以这样使用它：
+
+```html
+<br>
+<p>当前时间: {{ current_time() }}</p>
+<p>当前日期: {{ current_time("%Y-%m-%d") }}</p>
+```
+
+Flask添加全局函数的方法是封装了对Jinja2环境变量的操作。上述添加`current_time`全局函数的方法，等同于下面的代码。
+
+```python
+app.jinja_env.globals['current_time'] = current_time
+```
+
+我们在Flask应用中，不建议直接访问 Jinja2 的环境变量。如果离开Flask环境直接使用 Jinja2 的话，就可以通过`jinja2.Environment`来获取环境变量，并添加全局函数。

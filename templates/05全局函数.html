@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>全局函数</title>
+</head>
+<body>
+<h2>全局函数使用</h2>
+<h3>range</h3>
+<ul>
+    {% for num in range(10, 20, 2) %}
+        <li>for遍历: {{ num }}</li>
+    {% endfor %}
+</ul>
+<h3>dict</h3>
+{% set user = dict(name='Mike',age=15) %}
+<p>{{ user | tojson | safe }}</p>
+{# 显示 '{"age": 15, "name": "Mike"}' #}
+
+<h3>joiner</h3>
+{% set sep = joiner("|") %}
+{% for val in range(5) %}
+    {{ sep() }} <span>{{ val }}</span>
+{% endfor %}
+{# 显示 "0 | 1 | 2 | 3 | 4" #}
+<h3>cycle</h3>
+{% set cycle = cycler('odd', 'even') %}
+<ul>
+{% for num in range(10, 20, 2) %}
+    <li class="{{ cycle.next() }}">编号: {{ num }},
+    当前的累名 {{ cycle.current }} </li>
+{% endfor %}
+</ul>
+
+<h2>自定义全局函数</h2>
+{% with pattern = accept_pattern("<li>(.*?)</li>") %}
+  {% set founds = pattern.search("<li>Tom</li><li>Bob</li>") %}
+  <ul>
+  {% for item in founds %}
+    <li>找到一个内容: {{ item }}</li>
+  {% endfor %}
+  </ul>
+  <p>正则规则: {{ pattern.current_pattern }}</p>
+{% endwith %}
+
+<br>
+<p>当前时间: {{ current_time() }}</p>
+<p>当前日期: {{ current_time("%Y-%m-%d") }}</p>
+</body>
+</html>
