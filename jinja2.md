@@ -615,3 +615,122 @@ app.jinja_env.filters['double_step'] = double_filter
 ```
 
 我们在Flask应用中，不建议直接访问Jinja2的环境变量。如果离开Flask环境直接使用Jinja2的话，就可以通过`jinja2.Environment`来获取环境变量，并添加过滤器。
+
+## 4 测试器
+
+Jinja2中的测试器Test和过滤器非常相似，区别是测试器总是返回一个布尔值，它可以用来测试一个变量或者表达式，你需要使用”is”关键字来进行测试。测试器一般都是跟着if控制语句一起使用的。下面我们就来深入了解下这个测试器。
+
+### 测试器使用
+
+再次取回开篇的例子，我们在模板中对变量 hello 作如下判断：
+
+```html
+<h3>基本测试器</h3>
+{% if hello is lower %}
+    小写测试器: {{ hello }}
+{% endif %}
+<br>
+```
+
+当`hello`变量中的字母都是小写时，这段文字就会显示。这就是测试器，在`if`语句中，变量或表达式的后面加上`is`关键字，再加上测试器名称，就可以对该变量或表达式作测试，并根据其测试结果的真或假，来决定是否进入`if`语句块。测试器也可以有参数，用括号括起。当其只有一个参数时，可以省去括号。
+
+```html
+{% if 6 is divisibleby 3 %}
+    除法测试器: {{ 6/3 }}
+{% endif %}
+<br>
+```
+
+上例中，测试器`divisibleby`可以判断其所接收的变量是否可以被其参数整除。因为它只有一个参数，我们就可以用空格来分隔测试器和其参数。上面的调用同`divisibleby(3)`效果一致。测试器也可以配合`not`关键字一起使用：
+
+```html
+{% if 6 is not divisibleby(4) %}
+    除法测试器:{{ 6/4 }}
+{% endif %}
+```
+
+显然测试器本质上也是一个函数，它的第一个参数就是待测试的变量，在模板中使用时可以省略去。如果它有第二个参数，模板中就必须传进去。测试器函数返回的必须是一个布尔值，这样才可以用来给if语句作判断。
+
+### 内置测试器 Builtin Tests
+
+同过滤器一样，Jinja2模板引擎提供了丰富的内置测试器。这里介绍几个常用的。
+
+```jinja2
+h2>内置测试器</h2>
+{% if hello is defined %}
+    <p>检查变量是否被定义，也可以用undefined检查是否未被定义: {{ name }}</p>
+{% endif %}
+
+{% if hello is not none %}
+    检查变量是否为空:name
+{% endif %}
+
+<br>
+{% if hello is string %}
+    检查变量是否为字符串:{{ hello }}
+{% endif %}
+<br>
+{% if 2 is even %}
+    也可以用odd检查是否为奇数
+{% endif %}
+<br>
+{% if [1,2,3] is iterable %}
+    检查变量是否可被迭代循环,也可以用sequence检查是否是序列
+{% endif %}
+<br>
+{% if {'name':'test'} is mapping %}
+    检查变量是否是字典
+{% endif %}
+
+```
+
+更全的内置测试器介绍可以从[Jinja2的官方文档](http://jinja.pocoo.org/docs/dev/templates/#builtin-tests)中找到。
+
+### 自定义测试器
+
+如果内置测试器不满足需求，我们就来自己写一个。写法很类似于过滤器，先在Flask应用代码中定义测试器函数，然后通过`add_template_test`将其添加为模板测试器：
+
+```python
+import re
+def has_number(str):
+    return re.match(r'.*\d+', str)
+app.add_template_test(has_number,'contain_number')
+```
+
+我们定义了一个`has_number`函数，用正则来判断输入参数是否包含数字。然后调用`app.add_template_test`方法，第一个参数是测试器函数，第二个是测试器名称。之后，我们就可以在模板中使用`contain_number`测试器了：
+
+```python
+import re
+
+
+def has_number(str):
+    return re.match('.*\d+', str)
+
+
+app.add_template_test(has_number, 'contain_number')
+```
+
+同过滤器一样，Flask提供了添加测试器的装饰器`template_test`。下面的代码就添加了一个判断字符串是否以某一子串结尾的测试器。装饰器的参数定义了该测试器的名称`end_with`：
+
+```python
+@app.template_test('end_with')
+def end_with(str, suffix):
+    return str.lower().endswith(suffix.lower())
+```
+
+我们在模板中可以这样使用它：
+
+```python
+{% if hello is end_with "!" %}
+  <p>自定义结尾过滤器: {{ hello }}</p>
+{% endif %}
+```
+
+Flask添加测试器的方法是封装了对Jinja2环境变量的操作。上述添加`end_with`测试器的方法，等同于下面的代码。
+
+```python
+app.jinja_env.tests['end_with'] = end_with
+```
+
+我们在Flask应用中，不建议直接访问 `Jinja2` 的环境变量。如果离开Flask环境直接使用`Jinja2` 的话，就可以通过`jinja2.Environment`来获取环境变量，并添加测试器。
+

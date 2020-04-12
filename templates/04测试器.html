@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试器</title>
+</head>
+<body>
+
+<h3>基本测试器</h3>
+{% if hello is lower %}
+    小写测试器: {{ hello }}
+{% endif %}
+<br>
+{% if 6 is divisibleby 3 %}
+    除法测试器: {{ 6/3 }}
+{% endif %}
+<br>
+{% if 6 is not divisibleby(4) %}
+    除法测试器:{{ 6/4 }}
+{% endif %}
+
+<h2>内置测试器</h2>
+{% if hello is defined %}
+    <p>检查变量是否被定义，也可以用undefined检查是否未被定义: {{ name }}</p>
+{% endif %}
+
+{% if hello is not none %}
+    检查变量是否为空:name
+{% endif %}
+
+<br>
+{% if hello is string %}
+    检查变量是否为字符串:{{ hello }}
+{% endif %}
+<br>
+{% if 2 is even %}
+    也可以用odd检查是否为奇数
+{% endif %}
+<br>
+{% if [1,2,3] is iterable %}
+    检查变量是否可被迭代循环,也可以用sequence检查是否是序列
+{% endif %}
+<br>
+{% if {'name':'test'} is mapping %}
+    检查变量是否是字典
+{% endif %}
+
+<h2>自定义测试器</h2>
+{% if hello is contain_number %}
+    <p>自定义过滤器: {{ hello }}</p>
+{% endif %}
+
+{% if hello is end_with "!" %}
+  <p>自定义结尾过滤器: {{ hello }}</p>
+{% endif %}
+</body>
+</html>
