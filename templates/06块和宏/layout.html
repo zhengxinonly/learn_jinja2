@@ -1,0 +1,26 @@
+<!DOCTYPE>
+<head>
+    {% block head %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+</head>
+<body>
+<hr>
+
+<div class="page">
+    {% block body %}
+    {% endblock %}
+</div>
+
+<hr>
+<h3>块元素</h3>
+{% for item in range(5) %}
+    <li>{% block list scoped %}{% endblock %}</li>
+{% endfor %}
+<hr>
+
+
+{% include '06块和宏/footer.html' %}
+
+</body>

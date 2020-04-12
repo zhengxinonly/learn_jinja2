@@ -1,2 +1,2 @@
-FLASK_APP=05全局环境.py
+FLASK_APP=06块和宏.py
 FLASK_DEBUG=True

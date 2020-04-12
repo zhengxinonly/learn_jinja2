@@ -1,0 +1,44 @@
+{# 定义input宏 #}
+{% macro input(name, type='text', value='') -%}
+    <input type="{{ type }}" name="{{ name }}" value="{{ value|e }}">
+    {% for arg in varargs %}
+        <br>
+        <span>arg: {{ arg }}</span>
+    {% endfor %}
+    {% for k,v in kwargs.items() %}
+        <br>
+        <span>kwarg:{{ k }} = {{ v }}</span>
+    {% endfor %}
+    {#    <br/> {{ varargs }}#}
+    {#    <br/> {{ kwargs }}#}
+{%- endmacro %}
+
+{% macro list_users(users) -%}
+    <table>
+        <tr>
+            <th>姓名</th>
+            <th>操作</th>
+        </tr>
+        {%- for user in users %}
+            <tr>
+                <td>{{ user.name |e }}</td>
+                {{ caller() }}
+            </tr>
+        {%- endfor %}
+    </table>
+{%- endmacro %}
+
+{% macro list_users2(users) -%}
+    <table>
+        <tr>
+            <th>姓名</th>
+            <th>性别</th>
+            <th>操作</th>
+        </tr>
+        {%- for user in users %}
+            <tr>
+                <td>{{ user.name |e }}</td>
+                {{ caller(user.gender) }}</tr>
+        {%- endfor %}
+    </table>
+{%- endmacro %}

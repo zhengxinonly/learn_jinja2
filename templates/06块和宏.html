@@ -1,0 +1,51 @@
+{% extends "06块和宏/layout.html" %}
+{% block title %}块元素案例{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        h1 {
+            color: #336699;
+        }
+    </style>
+{% endblock %}
+
+{% block list %}
+    <em>{{ item }}</em>
+{% endblock %}
+
+{% block body %}
+    <hr>
+    <h2>宏 (Macro)</h2>
+    {% import '06块和宏/form.html' as form %}
+    <p>{{ form.input('username', value='user') }}</p>
+    <p>{{ form.input('password', 'password') }}</p>
+    <p>{{ form.input('submit', 'submit', 'Submit') }}</p>
+    {% from '06块和宏/form.html' import input %}
+    <p>{{ input('username', value='user') }}</p>
+    <p>{{ input('password', 'password') }}</p>
+
+    <p>{{ input('submit', 'submit', 'Submit', 'more arg1', 'more arg2', ext='more arg3') }}</p>
+    <hr>
+    <h2>访问调用者内容</h2>
+    {% from '06块和宏/form.html' import list_users %}
+    {% set users=[{'name':'Tom','gender':'M','age':20},
+              {'name':'John','gender':'M','age':18},
+              {'name':'Mary','gender':'F','age':24}] %}
+
+    {% call list_users(users) %}
+        <td><input name="delete" type="button" value="Delete"></td>
+    {% endcall %}
+
+    <h3>给调用者传递参数</h3>
+    {% from '06块和宏/form.html' import list_users2 %}
+    {% call(gender) list_users2(users) %}
+        <td>
+            {% if gender == 'M' %}
+                <img src="{{ url_for('static', filename='img/male.png') }}" width="20px">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/female.png') }}" width="20px">
+            {% endif %}
+        </td>
+        <td><input name="delete" type="button" value="Delete"></td>
+    {% endcall %}
+{% endblock body %}
